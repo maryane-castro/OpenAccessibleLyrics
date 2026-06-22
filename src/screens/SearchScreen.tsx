@@ -93,6 +93,14 @@ export function SearchScreen({ navigation, route }: Props) {
         >
           <Text style={styles.settingsIcon}>⚙</Text>
         </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
+          onPress={() => navigation.navigate('Favorites')}
+          accessibilityLabel="Favoritos"
+          accessibilityRole="button"
+        >
+          <Text style={styles.settingsIcon}>★</Text>
+        </Pressable>
         <TextInput
           style={[styles.searchInput, { fontSize, lineHeight: lineHeight(fontSize) }]}
           value={query}

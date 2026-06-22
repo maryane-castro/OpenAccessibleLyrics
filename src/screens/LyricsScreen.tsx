@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFavorites } from '../hooks/useFavorites';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -30,6 +31,7 @@ export function LyricsScreen({ navigation, route }: Props) {
   const voice = useVoiceSearch();
   const insets = useSafeAreaInsets();
   const lyrics = extractPlainText(track);
+  const { isFavorite, toggle } = useFavorites(track.id);
 
   useEffect(() => {
     if (voice.transcript) {
@@ -84,6 +86,16 @@ export function LyricsScreen({ navigation, route }: Props) {
             {track.artistName}
           </Text>
         </View>
+        <Pressable
+          style={({ pressed }) => [styles.favoriteButton, pressed && styles.pressed]}
+          onPress={() => toggle(track)}
+          accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.favoriteIcon, isFavorite && styles.favoriteIconActive]}>
+            {isFavorite ? '★' : '☆'}
+          </Text>
+        </Pressable>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -144,6 +156,19 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flex: 1,
+  },
+  favoriteButton: {
+    minWidth: minTouchTarget,
+    minHeight: minTouchTarget,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  favoriteIcon: {
+    fontSize: 30,
+    color: colors.textSecondary,
+  },
+  favoriteIconActive: {
+    color: colors.accent,
   },
   trackTitle: {
     color: colors.text,
