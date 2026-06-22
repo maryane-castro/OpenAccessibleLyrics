@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,9 +37,7 @@ export function SearchScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
-    if (voice.transcript) {
-      setQuery(voice.transcript);
-    }
+    if (voice.transcript) setQuery(voice.transcript);
   }, [voice.transcript]);
 
   useEffect(() => {
@@ -58,8 +57,7 @@ export function SearchScreen({ navigation, route }: Props) {
     setLoading(true);
     setError(false);
     try {
-      const tracks = await searchTracks(q);
-      setResults(tracks);
+      setResults(await searchTracks(q));
     } catch {
       setError(true);
     } finally {
@@ -78,42 +76,52 @@ export function SearchScreen({ navigation, route }: Props) {
     }
   }
 
-  function handleResultPress(track: Track) {
-    navigation.navigate('Lyrics', { track });
-  }
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Pressable
-          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
-          onPress={() => navigation.navigate('Settings')}
-          accessibilityLabel="Configurações"
-          accessibilityRole="button"
-        >
-          <Text style={styles.settingsIcon}>⚙</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}
-          onPress={() => navigation.navigate('Favorites')}
-          accessibilityLabel="Favoritos"
-          accessibilityRole="button"
-        >
-          <Text style={styles.settingsIcon}>★</Text>
-        </Pressable>
-        <TextInput
-          style={[styles.searchInput, { fontSize, lineHeight: lineHeight(fontSize) }]}
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Nome da música ou artista"
-          placeholderTextColor={colors.textSecondary}
-          returnKeyType="search"
-          onSubmitEditing={() => {
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-            if (query.trim()) runSearch(query);
-          }}
-          accessibilityLabel="Campo de busca"
-        />
+        <View style={styles.searchRow}>
+          <Ionicons name="search" size={20} color={colors.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { fontSize, lineHeight: lineHeight(fontSize) }]}
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Nome da música ou artista"
+            placeholderTextColor={colors.textSecondary}
+            returnKeyType="search"
+            onSubmitEditing={() => {
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              if (query.trim()) runSearch(query);
+            }}
+            accessibilityLabel="Campo de busca"
+          />
+          {query.length > 0 && (
+            <Pressable
+              onPress={() => { setQuery(''); setResults([]); setError(false); }}
+              accessibilityLabel="Limpar busca"
+              hitSlop={12}
+            >
+              <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+            </Pressable>
+          )}
+        </View>
+        <View style={styles.actions}>
+          <Pressable
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+            onPress={() => navigation.navigate('Favorites')}
+            accessibilityLabel="Favoritos"
+            accessibilityRole="button"
+          >
+            <Ionicons name="heart-outline" size={24} color={colors.text} />
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
+            onPress={() => navigation.navigate('Settings')}
+            accessibilityLabel="Configurações"
+            accessibilityRole="button"
+          >
+            <Ionicons name="settings-outline" size={24} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -125,8 +133,9 @@ export function SearchScreen({ navigation, route }: Props) {
 
         {!loading && error && (
           <View style={styles.centered}>
+            <Ionicons name="wifi-outline" size={48} color={colors.textSecondary} />
             <Text style={[styles.message, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-              Não foi possível buscar.{'\n'}Verifique a internet.
+              Sem conexão.{'\n'}Verifique a internet.
             </Text>
             <Pressable
               style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
@@ -139,10 +148,15 @@ export function SearchScreen({ navigation, route }: Props) {
 
         {!loading && !error && results.length === 0 && (
           <View style={styles.centered}>
+            <Ionicons
+              name={query.trim() ? 'musical-notes-outline' : 'mic-outline'}
+              size={52}
+              color={colors.border}
+            />
             <Text style={[styles.message, { fontSize, lineHeight: lineHeight(fontSize) }]}>
               {query.trim()
                 ? 'Nenhuma música encontrada.'
-                : 'Fale ou digite o nome de uma música.'}
+                : 'Fale ou digite o nome\nde uma música.'}
             </Text>
           </View>
         )}
@@ -152,7 +166,7 @@ export function SearchScreen({ navigation, route }: Props) {
             data={results}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => (
-              <ResultCard track={item} onPress={handleResultPress} />
+              <ResultCard track={item} onPress={(t) => navigation.navigate('Lyrics', { track: t })} />
             )}
             contentContainerStyle={styles.list}
           />
@@ -172,32 +186,36 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingLeft: spacing.md,
+    gap: spacing.xs,
   },
-  settingsButton: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
+  actions: {
+    flexDirection: 'row',
+  },
+  iconBtn: {
+    width: minTouchTarget,
+    height: minTouchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  settingsIcon: {
-    fontSize: 28,
+  searchRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius,
+    paddingHorizontal: spacing.md,
+    minHeight: minTouchTarget,
+    gap: spacing.sm,
+    marginVertical: spacing.sm,
   },
   searchInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     color: colors.text,
-    backgroundColor: colors.cardBackground,
-    minHeight: minTouchTarget,
+    paddingVertical: spacing.sm,
   },
   content: {
     flex: 1,
@@ -212,6 +230,7 @@ const styles = StyleSheet.create({
   message: {
     color: colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '500',
   },
   list: {
     paddingVertical: spacing.md,
@@ -226,10 +245,10 @@ const styles = StyleSheet.create({
   },
   retryButtonLabel: {
     color: colors.buttonText,
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 18,
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.6,
   },
 });

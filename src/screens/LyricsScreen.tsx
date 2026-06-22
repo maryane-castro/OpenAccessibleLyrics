@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Linking,
   Pressable,
@@ -8,9 +8,9 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useFavorites } from '../hooks/useFavorites';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -18,6 +18,7 @@ import { extractPlainText } from '../services/lrclib';
 import { BottomBar } from '../components/BottomBar';
 import { useVoiceSearch } from '../hooks/useVoiceSearch';
 import { useFontSize } from '../hooks/useFontSize';
+import { useFavorites } from '../hooks/useFavorites';
 import { colors, spacing, borderRadius, minTouchTarget, lineHeight } from '../theme';
 
 type Props = {
@@ -40,11 +41,8 @@ export function LyricsScreen({ navigation, route }: Props) {
   }, [voice.transcript]);
 
   function handleVoicePress() {
-    if (voice.isListening) {
-      voice.stop();
-    } else {
-      voice.start();
-    }
+    if (voice.isListening) voice.stop();
+    else voice.start();
   }
 
   async function handlePrint() {
@@ -62,14 +60,15 @@ export function LyricsScreen({ navigation, route }: Props) {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           onPress={() => navigation.goBack()}
-          accessibilityLabel="Voltar para busca"
+          accessibilityLabel="Voltar"
           accessibilityRole="button"
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={26} color={colors.text} />
         </Pressable>
-        <View style={styles.titleContainer}>
+
+        <View style={styles.trackInfo}>
           <Text
             style={[styles.trackTitle, { fontSize, lineHeight: lineHeight(fontSize) }]}
             numberOfLines={1}
@@ -77,24 +76,24 @@ export function LyricsScreen({ navigation, route }: Props) {
             {track.trackName}
           </Text>
           <Text
-            style={[
-              styles.artistTitle,
-              { fontSize: fontSize - 4, lineHeight: lineHeight(fontSize - 4) },
-            ]}
+            style={[styles.artistName, { fontSize: fontSize - 4, lineHeight: lineHeight(fontSize - 4) }]}
             numberOfLines={1}
           >
             {track.artistName}
           </Text>
         </View>
+
         <Pressable
-          style={({ pressed }) => [styles.favoriteButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           onPress={() => toggle(track)}
           accessibilityLabel={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           accessibilityRole="button"
         >
-          <Text style={[styles.favoriteIcon, isFavorite && styles.favoriteIconActive]}>
-            {isFavorite ? '★' : '☆'}
-          </Text>
+          <Ionicons
+            name={isFavorite ? 'heart' : 'heart-outline'}
+            size={28}
+            color={isFavorite ? colors.star : colors.text}
+          />
         </Pressable>
       </View>
 
@@ -107,22 +106,26 @@ export function LyricsScreen({ navigation, route }: Props) {
             {lyrics}
           </Text>
         ) : (
-          <Text
-            style={[styles.noLyrics, { fontSize, lineHeight: lineHeight(fontSize) }]}
-          >
-            Letra não disponível para esta música.
-          </Text>
+          <View style={styles.noLyricsContainer}>
+            <Ionicons name="musical-notes-outline" size={52} color={colors.border} />
+            <Text style={[styles.noLyrics, { fontSize, lineHeight: lineHeight(fontSize) }]}>
+              Letra não disponível para esta música.
+            </Text>
+          </View>
         )}
       </ScrollView>
 
-      <Pressable
-        style={({ pressed }) => [styles.printButton, pressed && styles.pressed]}
-        onPress={handlePrint}
-        accessibilityLabel="Imprimir letra"
-        accessibilityRole="button"
-      >
-        <Text style={styles.printButtonLabel}>Imprimir</Text>
-      </Pressable>
+      <View style={styles.printRow}>
+        <Pressable
+          style={({ pressed }) => [styles.printButton, pressed && styles.pressed]}
+          onPress={handlePrint}
+          accessibilityLabel="Imprimir letra"
+          accessibilityRole="button"
+        >
+          <Ionicons name="share-outline" size={20} color={colors.buttonText} />
+          <Text style={styles.printButtonLabel}>Imprimir</Text>
+        </Pressable>
+      </View>
 
       <BottomBar isListening={voice.isListening} onVoicePress={handleVoicePress} />
     </View>
@@ -132,53 +135,38 @@ export function LyricsScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
-  backButton: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
+  iconBtn: {
+    width: minTouchTarget,
+    height: minTouchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: {
-    fontSize: 28,
-    color: colors.accent,
-  },
-  titleContainer: {
+  trackInfo: {
     flex: 1,
-  },
-  favoriteButton: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  favoriteIcon: {
-    fontSize: 30,
-    color: colors.textSecondary,
-  },
-  favoriteIconActive: {
-    color: colors.accent,
+    paddingVertical: spacing.xs,
   },
   trackTitle: {
     color: colors.text,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
-  artistTitle: {
+  artistName: {
     color: colors.textSecondary,
+    marginTop: 2,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -187,25 +175,37 @@ const styles = StyleSheet.create({
   lyrics: {
     color: colors.text,
   },
+  noLyricsContainer: {
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingTop: spacing.xl * 2,
+  },
   noLyrics: {
     color: colors.textSecondary,
     textAlign: 'center',
-    marginTop: spacing.xl,
+  },
+  printRow: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   printButton: {
     backgroundColor: colors.accent,
-    margin: spacing.md,
     borderRadius,
     minHeight: minTouchTarget,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.sm,
   },
   printButtonLabel: {
     color: colors.buttonText,
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 18,
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.6,
   },
 });

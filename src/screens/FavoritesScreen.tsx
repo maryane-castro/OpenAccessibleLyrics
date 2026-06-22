@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
@@ -24,76 +25,67 @@ export function FavoritesScreen({ navigation }: Props) {
   const voice = useVoiceSearch();
   const insets = useSafeAreaInsets();
 
-  const sorted = [...favorites].sort((a: Favorite, b: Favorite) => {
-    if (sort === 'alpha') {
-      return a.track.trackName.localeCompare(b.track.trackName, 'pt');
-    }
-    return b.savedAt - a.savedAt;
-  });
+  const sorted = [...favorites].sort((a: Favorite, b: Favorite) =>
+    sort === 'alpha'
+      ? a.track.trackName.localeCompare(b.track.trackName, 'pt')
+      : b.savedAt - a.savedAt,
+  );
 
   function handleVoicePress() {
-    if (voice.isListening) {
-      voice.stop();
-    } else {
-      voice.start();
-    }
-  }
-
-  function handleTrackPress(track: Track) {
-    navigation.navigate('Lyrics', { track });
+    if (voice.isListening) voice.stop();
+    else voice.start();
   }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           onPress={() => navigation.goBack()}
           accessibilityLabel="Voltar"
           accessibilityRole="button"
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={26} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { fontSize, lineHeight: lineHeight(fontSize) }]}>
           Favoritos
         </Text>
+        {favorites.length > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{favorites.length}</Text>
+          </View>
+        )}
       </View>
 
-      <View style={styles.sortRow}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.sortButton,
-            sort === 'alpha' && styles.sortButtonActive,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => setSort('alpha')}
-          accessibilityLabel="Ordenar de A a Z"
-          accessibilityRole="button"
-        >
-          <Text style={[styles.sortLabel, sort === 'alpha' && styles.sortLabelActive]}>
-            A → Z
-          </Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.sortButton,
-            sort === 'recent' && styles.sortButtonActive,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => setSort('recent')}
-          accessibilityLabel="Ordenar por mais recente"
-          accessibilityRole="button"
-        >
-          <Text style={[styles.sortLabel, sort === 'recent' && styles.sortLabelActive]}>
-            Mais recente
-          </Text>
-        </Pressable>
-      </View>
+      {sorted.length > 0 && (
+        <View style={styles.sortRow}>
+          {(['recent', 'alpha'] as SortOrder[]).map((option) => (
+            <Pressable
+              key={option}
+              style={({ pressed }) => [
+                styles.sortChip,
+                sort === option && styles.sortChipActive,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => setSort(option)}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.sortChipLabel, sort === option && styles.sortChipLabelActive]}>
+                {option === 'recent' ? 'Mais recente' : 'A → Z'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       {sorted.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={[styles.emptyText, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-            Nenhuma música favorita ainda.
+          <Ionicons name="heart-outline" size={56} color={colors.border} />
+          <Text style={[styles.emptyTitle, { fontSize, lineHeight: lineHeight(fontSize) }]}>
+            Nenhuma música salva ainda.
+          </Text>
+          <Text style={[styles.emptyHint, { fontSize: fontSize - 4 }]}>
+            Toque no coração na tela da letra para salvar.
           </Text>
         </View>
       ) : (
@@ -101,7 +93,10 @@ export function FavoritesScreen({ navigation }: Props) {
           data={sorted}
           keyExtractor={(item) => String(item.track.id)}
           renderItem={({ item }) => (
-            <ResultCard track={item.track} onPress={handleTrackPress} />
+            <ResultCard
+              track={item.track}
+              onPress={(t: Track) => navigation.navigate('Lyrics', { track: t })}
+            />
           )}
           contentContainerStyle={styles.list}
         />
@@ -120,52 +115,65 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    paddingRight: spacing.md,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  backButton: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
+  iconBtn: {
+    width: minTouchTarget,
+    height: minTouchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: {
-    fontSize: 28,
-    color: colors.accent,
-  },
   headerTitle: {
+    flex: 1,
     color: colors.text,
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+  badge: {
+    backgroundColor: colors.accent,
+    borderRadius: 999,
+    minWidth: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  badgeText: {
+    color: colors.buttonText,
+    fontSize: 13,
+    fontWeight: '700',
   },
   sortRow: {
     flexDirection: 'row',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  sortButton: {
-    flex: 1,
-    minHeight: minTouchTarget,
+  sortChip: {
+    paddingHorizontal: spacing.md,
+    height: 40,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  sortButtonActive: {
+  sortChipActive: {
     backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
-  sortLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  sortChipLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
-  sortLabelActive: {
+  sortChipLabelActive: {
     color: colors.buttonText,
   },
   empty: {
@@ -173,8 +181,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
+    gap: spacing.md,
   },
-  emptyText: {
+  emptyTitle: {
+    color: colors.text,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  emptyHint: {
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -182,6 +196,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.6,
   },
 });

@@ -1,12 +1,25 @@
 export const colors = {
-  background: '#FFFFFF',
-  text: '#1A1A1A',
-  textSecondary: '#555555',
-  accent: '#1A56DB',
-  listening: '#CC0000',
-  border: '#E0E0E0',
-  cardBackground: '#F5F5F5',
+  background: '#F7F7FA',
+  surface: '#FFFFFF',
+  text: '#111827',
+  textSecondary: '#6B7280',
+  accent: '#2563EB',
+  accentSurface: '#EFF6FF',
+  border: '#E5E7EB',
+  listening: '#DC2626',
+  star: '#F59E0B',
   buttonText: '#FFFFFF',
+  // keep for backward compat
+  cardBackground: '#FFFFFF',
+  accentLight: '#EFF6FF',
+};
+
+export const shadow = {
+  shadowColor: '#000000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.06,
+  shadowRadius: 6,
+  elevation: 2,
 };
 
 export const spacing = {
@@ -17,9 +30,8 @@ export const spacing = {
   xl: 32,
 };
 
-export const minTouchTarget = 64;
-
 export const borderRadius = 12;
+export const minTouchTarget = 64;
 
 export const defaultFontSize = 22;
 export const minFontSize = 16;
@@ -27,5 +39,5 @@ export const maxFontSize = 40;
 export const fontSizeStep = 2;
 
 export function lineHeight(fontSize: number): number {
-  return Math.round(fontSize * 1.6);
+  return Math.round(fontSize * 1.55);
 }

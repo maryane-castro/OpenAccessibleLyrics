@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Contact, ContactField, requestPermissionsAsync } from 'expo-contacts';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,14 +19,9 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useFontSize } from '../hooks/useFontSize';
 import { colors, spacing, borderRadius, minTouchTarget, lineHeight } from '../theme';
 
-type ContactEntry = {
-  id: string;
-  fullName?: string | null;
-  phone: string;
-};
+type ContactEntry = { id: string; fullName?: string | null; phone: string };
 
 const STORAGE_KEY = '@whatsapp_contact';
-
 type ContactInfo = { name: string; number: string };
 
 type Props = {
@@ -70,19 +66,15 @@ export function SettingsScreen({ navigation }: Props) {
       );
       const entries: ContactEntry[] = allDetails
         .filter((c) => c.phones && c.phones.length > 0 && c.phones[0].number)
-        .map((c) => ({
-          id: c.id,
-          fullName: c.fullName,
-          phone: c.phones![0].number!,
-        }));
+        .map((c) => ({ id: c.id, fullName: c.fullName, phone: c.phones![0].number! }));
       if (entries.length === 0) {
-        Alert.alert('Nenhum contato', 'Não foram encontrados contatos com número de telefone.');
+        Alert.alert('Sem contatos', 'Nenhum contato com número encontrado.');
         return;
       }
       setContacts(entries);
       setSearch('');
       setPickerVisible(true);
-    } catch (err) {
+    } catch {
       Alert.alert('Erro', 'Não foi possível carregar os contatos. Tente novamente.');
     }
   }
@@ -95,7 +87,7 @@ export function SettingsScreen({ navigation }: Props) {
     setSaved(info);
     setPickerVisible(false);
     setSaveConfirmed(true);
-    setTimeout(() => setSaveConfirmed(false), 2000);
+    setTimeout(() => setSaveConfirmed(false), 2500);
   }
 
   const filtered = contacts.filter((c) =>
@@ -106,12 +98,12 @@ export function SettingsScreen({ navigation }: Props) {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
           onPress={() => navigation.goBack()}
           accessibilityLabel="Voltar"
           accessibilityRole="button"
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={26} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { fontSize, lineHeight: lineHeight(fontSize) }]}>
           Configurações
@@ -119,73 +111,102 @@ export function SettingsScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.content}>
-        <Text style={[styles.label, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-          Contato para enviar a letra
+        <Text style={[styles.sectionLabel, { fontSize: fontSize - 6 }]}>
+          CONTATO PARA IMPRIMIR A LETRA
         </Text>
 
         {saved ? (
-          <View style={styles.savedCard}>
-            <Text style={[styles.savedName, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-              {saved.name}
-            </Text>
-            <Text style={[styles.savedNumber, { fontSize: fontSize - 4 }]}>
-              +{saved.number}
-            </Text>
+          <View style={styles.contactCard}>
+            <View style={styles.contactIcon}>
+              <Ionicons name="person" size={28} color={colors.accent} />
+            </View>
+            <View style={styles.contactInfo}>
+              <Text style={[styles.contactName, { fontSize, lineHeight: lineHeight(fontSize) }]}>
+                {saved.name}
+              </Text>
+              <Text style={[styles.contactNumber, { fontSize: fontSize - 4 }]}>
+                +{saved.number}
+              </Text>
+            </View>
+            <Ionicons name="checkmark-circle" size={22} color="#22C55E" />
           </View>
         ) : (
-          <Text style={[styles.hint, { fontSize: fontSize - 4 }]}>
-            Nenhum contato selecionado.
-          </Text>
+          <View style={styles.emptyCard}>
+            <Ionicons name="person-add-outline" size={32} color={colors.textSecondary} />
+            <Text style={[styles.emptyCardText, { fontSize: fontSize - 2 }]}>
+              Nenhum contato selecionado
+            </Text>
+          </View>
         )}
 
         <Pressable
           style={({ pressed }) => [styles.pickButton, pressed && styles.pressed]}
           onPress={openPicker}
-          accessibilityLabel="Escolher contato"
+          accessibilityLabel={saved ? 'Trocar contato' : 'Escolher contato'}
           accessibilityRole="button"
         >
-          <Text style={styles.pickButtonLabel}>
+          <Ionicons name="people-outline" size={20} color={colors.buttonText} />
+          <Text style={[styles.pickButtonLabel, { fontSize: fontSize - 2 }]}>
             {saved ? 'Trocar contato' : 'Escolher contato'}
           </Text>
         </Pressable>
 
         {saveConfirmed && (
-          <Text style={[styles.confirmed, { fontSize: fontSize - 2 }]}>Salvo!</Text>
+          <View style={styles.toast}>
+            <Ionicons name="checkmark-circle-outline" size={18} color="#166534" />
+            <Text style={[styles.toastText, { fontSize: fontSize - 4 }]}>Contato salvo!</Text>
+          </View>
         )}
       </View>
 
-      <Modal visible={pickerVisible} animationType="slide" onRequestClose={() => setPickerVisible(false)}>
-        <View style={[styles.modal, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <Modal
+        visible={pickerVisible}
+        animationType="slide"
+        onRequestClose={() => setPickerVisible(false)}
+      >
+        <View style={[styles.modal, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Pressable
-              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
               onPress={() => setPickerVisible(false)}
+              accessibilityLabel="Fechar"
+              accessibilityRole="button"
             >
-              <Text style={styles.backIcon}>←</Text>
+              <Ionicons name="arrow-back" size={26} color={colors.text} />
             </Pressable>
-            <TextInput
-              style={styles.searchInput}
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Buscar contato..."
-              placeholderTextColor={colors.textSecondary}
-              autoFocus
-            />
+            <View style={styles.modalSearchBar}>
+              <Ionicons name="search" size={18} color={colors.textSecondary} />
+              <TextInput
+                style={[styles.modalSearchInput, { fontSize }]}
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Buscar contato..."
+                placeholderTextColor={colors.textSecondary}
+                autoFocus
+              />
+            </View>
           </View>
+
           <FlatList
             data={filtered}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Pressable
-                style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
+                style={({ pressed }) => [styles.contactRow, pressed && styles.contactRowPressed]}
                 onPress={() => selectContact(item)}
               >
-                <Text style={[styles.contactName, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-                  {item.fullName ?? item.phone}
-                </Text>
-                <Text style={[styles.contactNumber, { fontSize: fontSize - 4 }]}>
-                  {item.phone}
-                </Text>
+                <View style={styles.contactRowIcon}>
+                  <Ionicons name="person-outline" size={20} color={colors.accent} />
+                </View>
+                <View style={styles.contactRowInfo}>
+                  <Text style={[styles.rowName, { fontSize, lineHeight: lineHeight(fontSize) }]}>
+                    {item.fullName ?? item.phone}
+                  </Text>
+                  <Text style={[styles.rowNumber, { fontSize: fontSize - 4 }]}>
+                    {item.phone}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
               </Pressable>
             )}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -204,114 +225,168 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingRight: spacing.md,
   },
-  backButton: {
-    minWidth: minTouchTarget,
-    minHeight: minTouchTarget,
+  iconBtn: {
+    width: minTouchTarget,
+    height: minTouchTarget,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backIcon: {
-    fontSize: 28,
-    color: colors.accent,
-  },
   headerTitle: {
+    flex: 1,
     color: colors.text,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   content: {
     padding: spacing.lg,
     gap: spacing.md,
   },
-  label: {
+  sectionLabel: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  contactCard: {
+    backgroundColor: colors.surface,
+    borderRadius,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  contactIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.accentSurface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  contactName: {
     color: colors.text,
     fontWeight: '600',
   },
-  savedCard: {
-    backgroundColor: colors.cardBackground,
+  contactNumber: {
+    color: colors.textSecondary,
+  },
+  emptyCard: {
+    backgroundColor: colors.surface,
     borderRadius,
-    padding: spacing.md,
-    gap: spacing.xs,
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
   },
-  savedName: {
-    color: colors.text,
-    fontWeight: 'bold',
-  },
-  savedNumber: {
+  emptyCardText: {
     color: colors.textSecondary,
-  },
-  hint: {
-    color: colors.textSecondary,
+    fontWeight: '500',
   },
   pickButton: {
     backgroundColor: colors.accent,
     borderRadius,
     minHeight: minTouchTarget,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    gap: spacing.sm,
   },
   pickButtonLabel: {
     color: colors.buttonText,
-    fontWeight: 'bold',
-    fontSize: 18,
+    fontWeight: '700',
   },
-  confirmed: {
-    color: colors.accent,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: '#F0FDF4',
+    borderRadius,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  toastText: {
+    color: '#166534',
+    fontWeight: '600',
+  },
+  pressed: {
+    opacity: 0.6,
   },
   modal: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingBottom: 0,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingRight: spacing.md,
     gap: spacing.sm,
   },
-  searchInput: {
+  modalSearchBar: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
     borderRadius,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    height: 44,
+    gap: spacing.sm,
+    marginVertical: spacing.sm,
+  },
+  modalSearchInput: {
+    flex: 1,
     color: colors.text,
-    backgroundColor: colors.cardBackground,
-    minHeight: minTouchTarget,
-    fontSize: 18,
   },
   contactRow: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.md,
     minHeight: minTouchTarget,
-    justifyContent: 'center',
+    backgroundColor: colors.surface,
   },
-  contactName: {
+  contactRowPressed: {
+    backgroundColor: colors.background,
+  },
+  contactRowIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accentSurface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactRowInfo: {
+    flex: 1,
+  },
+  rowName: {
     color: colors.text,
     fontWeight: '500',
   },
-  contactNumber: {
+  rowNumber: {
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   separator: {
     height: 1,
     backgroundColor: colors.border,
-    marginLeft: spacing.lg,
-  },
-  pressed: {
-    opacity: 0.75,
+    marginLeft: spacing.md + 44 + spacing.md,
   },
 });

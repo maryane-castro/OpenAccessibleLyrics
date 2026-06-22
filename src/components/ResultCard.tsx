@@ -1,8 +1,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Track } from '../services/lrclib';
 import { useFontSize } from '../hooks/useFontSize';
-import { colors, spacing, minTouchTarget, borderRadius, lineHeight } from '../theme';
+import { colors, spacing, minTouchTarget, borderRadius, lineHeight, shadow } from '../theme';
 
 type Props = {
   track: Track;
@@ -36,31 +37,39 @@ export function ResultCard({ track, onPress }: Props) {
           {track.artistName}
         </Text>
       </View>
+      <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} style={styles.chevron} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: colors.surface,
     borderRadius,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     minHeight: minTouchTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...shadow,
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.7,
   },
   content: {
-    padding: spacing.md,
-    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: spacing.md,
+    paddingLeft: spacing.md,
   },
   trackName: {
     color: colors.text,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   artistName: {
     color: colors.textSecondary,
     marginTop: spacing.xs,
+  },
+  chevron: {
+    paddingHorizontal: spacing.md,
   },
 });
