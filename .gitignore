@@ -1,0 +1,46 @@
+# docs internos
+.github/docs
+
+# dependências
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Android build
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+*.apk
+*.aab
+
+# iOS
+ios/Pods/
+ios/build/
+
+# env e segredos
+.env
+.env.local
+.env*.local
+
+# editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript
+*.tsbuildinfo
