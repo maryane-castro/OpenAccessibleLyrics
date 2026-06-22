@@ -71,6 +71,9 @@ export function SearchScreen({ navigation, route }: Props) {
     if (voice.isListening) {
       voice.stop();
     } else {
+      setQuery('');
+      setResults([]);
+      setError(false);
       voice.start();
     }
   }

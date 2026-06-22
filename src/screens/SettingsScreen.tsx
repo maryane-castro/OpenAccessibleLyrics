@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Linking,
   Modal,
   Pressable,
   StyleSheet,
@@ -10,18 +11,18 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Contacts from 'expo-contacts';
-
-type ContactEntry = {
-  id?: string;
-  name?: string;
-  phoneNumbers?: Contacts.PhoneNumber[];
-};
+import { Contact, ContactField, requestPermissionsAsync } from 'expo-contacts';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useFontSize } from '../hooks/useFontSize';
 import { colors, spacing, borderRadius, minTouchTarget, lineHeight } from '../theme';
+
+type ContactEntry = {
+  id: string;
+  fullName?: string | null;
+  phone: string;
+};
 
 const STORAGE_KEY = '@whatsapp_contact';
 
@@ -47,29 +48,49 @@ export function SettingsScreen({ navigation }: Props) {
   }, []);
 
   async function openPicker() {
-    const { status } = await Contacts.requestPermissionsAsync();
+    const { status, canAskAgain } = await requestPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert(
-        'Permissão necessária',
-        'Permita o acesso aos contatos nas configurações do celular.',
-      );
+      if (canAskAgain === false) {
+        Alert.alert(
+          'Permissão necessária',
+          'O acesso aos contatos foi negado. Abra as configurações do app para permitir.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Abrir configurações', onPress: () => Linking.openSettings() },
+          ],
+        );
+      } else {
+        Alert.alert('Permissão necessária', 'Permita o acesso aos contatos para continuar.');
+      }
       return;
     }
-    const { data } = await Contacts.getContactsAsync({
-      fields: [Contacts.Fields.PhoneNumbers, Contacts.Fields.Name],
-      sort: Contacts.SortTypes.FirstName,
-    });
-    const entries = data as unknown as ContactEntry[];
-    setContacts(entries.filter((c) => c.phoneNumbers && c.phoneNumbers.length > 0));
-    setSearch('');
-    setPickerVisible(true);
+    try {
+      const allDetails = await Contact.getAllDetails(
+        [ContactField.FULL_NAME, ContactField.PHONES] as const,
+      );
+      const entries: ContactEntry[] = allDetails
+        .filter((c) => c.phones && c.phones.length > 0 && c.phones[0].number)
+        .map((c) => ({
+          id: c.id,
+          fullName: c.fullName,
+          phone: c.phones![0].number!,
+        }));
+      if (entries.length === 0) {
+        Alert.alert('Nenhum contato', 'Não foram encontrados contatos com número de telefone.');
+        return;
+      }
+      setContacts(entries);
+      setSearch('');
+      setPickerVisible(true);
+    } catch (err) {
+      Alert.alert('Erro', 'Não foi possível carregar os contatos. Tente novamente.');
+    }
   }
 
   async function selectContact(contact: ContactEntry) {
-    const raw = contact.phoneNumbers![0].number!;
-    const digits = raw.replace(/\D/g, '');
+    const digits = contact.phone.replace(/\D/g, '');
     const number = digits.startsWith('55') ? digits : '55' + digits;
-    const info: ContactInfo = { name: contact.name ?? raw, number };
+    const info: ContactInfo = { name: contact.fullName ?? contact.phone, number };
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(info));
     setSaved(info);
     setPickerVisible(false);
@@ -78,7 +99,7 @@ export function SettingsScreen({ navigation }: Props) {
   }
 
   const filtered = contacts.filter((c) =>
-    (c.name ?? '').toLowerCase().includes(search.toLowerCase()),
+    (c.fullName ?? '').toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -153,17 +174,17 @@ export function SettingsScreen({ navigation }: Props) {
           </View>
           <FlatList
             data={filtered}
-            keyExtractor={(item) => item.id ?? item.name ?? Math.random().toString()}
+            keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <Pressable
                 style={({ pressed }) => [styles.contactRow, pressed && styles.pressed]}
                 onPress={() => selectContact(item)}
               >
                 <Text style={[styles.contactName, { fontSize, lineHeight: lineHeight(fontSize) }]}>
-                  {item.name}
+                  {item.fullName ?? item.phone}
                 </Text>
                 <Text style={[styles.contactNumber, { fontSize: fontSize - 4 }]}>
-                  {item.phoneNumbers![0].number}
+                  {item.phone}
                 </Text>
               </Pressable>
             )}
