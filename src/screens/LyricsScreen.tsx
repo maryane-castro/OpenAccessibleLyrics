@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -14,7 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { extractPlainText } from '../services/lrclib';
+import { extractPlainText, getLyrics } from '../services/lyrics';
 import { BottomBar } from '../components/BottomBar';
 import { useVoiceSearch } from '../hooks/useVoiceSearch';
 import { useFontSize } from '../hooks/useFontSize';
@@ -31,8 +32,18 @@ export function LyricsScreen({ navigation, route }: Props) {
   const { fontSize } = useFontSize();
   const voice = useVoiceSearch();
   const insets = useSafeAreaInsets();
-  const lyrics = extractPlainText(track);
   const { isFavorite, toggle } = useFavorites(track.id);
+
+  const [lyrics, setLyrics] = useState<string | null>(() => extractPlainText(track));
+  const [fetchingLyrics, setFetchingLyrics] = useState(track.source !== 'lrclib');
+
+  useEffect(() => {
+    if (track.source === 'lrclib') return;
+    getLyrics(track)
+      .then(setLyrics)
+      .catch(() => setLyrics(null))
+      .finally(() => setFetchingLyrics(false));
+  }, []);
 
   useEffect(() => {
     if (voice.transcript) {
@@ -98,7 +109,11 @@ export function LyricsScreen({ navigation, route }: Props) {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {lyrics ? (
+        {fetchingLyrics ? (
+          <View style={styles.noLyricsContainer}>
+            <ActivityIndicator size="large" color={colors.accent} />
+          </View>
+        ) : lyrics ? (
           <Text
             style={[styles.lyrics, { fontSize, lineHeight: lineHeight(fontSize) }]}
             selectable={false}

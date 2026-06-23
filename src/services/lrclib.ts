@@ -1,6 +1,8 @@
+import { Track } from './types';
+
 const BASE_URL = 'https://lrclib.net/api';
 
-export type Track = {
+type LrclibTrack = {
   id: number;
   trackName: string;
   artistName: string;
@@ -11,24 +13,30 @@ export type Track = {
   syncedLyrics: string | null;
 };
 
-export async function searchTracks(query: string): Promise<Track[]> {
-  const url = `${BASE_URL}/search?q=${encodeURIComponent(query)}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
+function normalize(t: LrclibTrack): Track {
+  return {
+    id: `lrclib_${t.id}`,
+    source: 'lrclib',
+    trackName: t.trackName,
+    artistName: t.artistName,
+    albumName: t.albumName ?? '',
+    plainLyrics: t.plainLyrics,
+    syncedLyrics: t.syncedLyrics,
+  };
 }
 
-function stripTimestamps(synced: string): string {
+export async function searchTracks(query: string): Promise<Track[]> {
+  const response = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}`);
+  if (!response.ok) throw new Error(`lrclib HTTP ${response.status}`);
+  const data: LrclibTrack[] = await response.json();
+  return data.map(normalize);
+}
+
+export function stripTimestamps(synced: string): string {
   return synced
     .replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, '')
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .join('\n');
-}
-
-export function extractPlainText(track: Track): string | null {
-  if (track.plainLyrics) return track.plainLyrics;
-  if (track.syncedLyrics) return stripTimestamps(track.syncedLyrics);
-  return null;
 }

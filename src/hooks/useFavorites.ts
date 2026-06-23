@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Track } from '../services/lrclib';
+import { Track } from '../services/types';
 
 const STORAGE_KEY = '@favorites';
 
 export type Favorite = { track: Track; savedAt: number };
 
-export function useFavorites(trackId?: number) {
+export function useFavorites(trackId?: string) {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
 
   async function load() {

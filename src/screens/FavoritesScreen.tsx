@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { Track } from '../services/lrclib';
+import { Track } from '../services/types';
 import { ResultCard } from '../components/ResultCard';
 import { BottomBar } from '../components/BottomBar';
 import { useVoiceSearch } from '../hooks/useVoiceSearch';

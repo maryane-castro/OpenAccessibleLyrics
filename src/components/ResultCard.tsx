@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Track } from '../services/lrclib';
+import { Track } from '../services/types';
 import { useFontSize } from '../hooks/useFontSize';
 import { colors, spacing, minTouchTarget, borderRadius, lineHeight, shadow } from '../theme';
 

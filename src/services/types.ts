@@ -1,6 +1,6 @@
 export type Track = {
   id: string;
-  source: 'lrclib' | 'vagalume' | 'genius';
+  source: 'lrclib' | 'letras' | 'genius';
   trackName: string;
   artistName: string;
   albumName: string;

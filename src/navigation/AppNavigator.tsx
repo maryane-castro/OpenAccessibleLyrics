@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Track } from '../services/lrclib';
+import { Track } from '../services/types';
 import { SearchScreen } from '../screens/SearchScreen';
 import { LyricsScreen } from '../screens/LyricsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
