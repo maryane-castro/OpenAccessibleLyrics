@@ -8,14 +8,26 @@ import { colors, spacing, minTouchTarget, borderRadius } from '../theme';
 type Props = {
   isListening: boolean;
   onVoicePress: () => void;
+  onHelpPress?: () => void;
 };
 
-export function BottomBar({ isListening, onVoicePress }: Props) {
+export function BottomBar({ isListening, onVoicePress, onHelpPress }: Props) {
   const { increase, decrease } = useFontSize();
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + spacing.sm }]}>
+      {onHelpPress && (
+        <Pressable
+          style={({ pressed }) => [styles.helpButton, pressed && styles.pressed]}
+          onPress={onHelpPress}
+          accessibilityLabel="Ajuda"
+          accessibilityRole="button"
+          hitSlop={12}
+        >
+          <Ionicons name="help-circle-outline" size={20} color={colors.textSecondary} />
+        </Pressable>
+      )}
       <Pressable
         style={({ pressed }) => [styles.fontButton, pressed && styles.pressed]}
         onPress={decrease}
@@ -44,7 +56,7 @@ export function BottomBar({ isListening, onVoicePress }: Props) {
       >
         <Ionicons
           name={isListening ? 'stop' : 'mic-outline'}
-          size={22}
+          size={20}
           color={colors.buttonText}
         />
         <Text style={styles.voiceButtonLabel}>
@@ -66,6 +78,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  helpButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+    height: minTouchTarget,
+  },
   fontButton: {
     backgroundColor: colors.surface,
     borderRadius,
@@ -86,7 +104,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: colors.accent,
     borderRadius,
-    minHeight: minTouchTarget,
+    minHeight: 52,
     justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
@@ -100,7 +118,7 @@ const styles = StyleSheet.create({
   voiceButtonLabel: {
     color: colors.buttonText,
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 15,
   },
   pressed: {
     opacity: 0.6,
