@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,9 @@ type Props = {
 
 export function FavoritesScreen({ navigation }: Props) {
   const [sort, setSort] = useState<SortOrder>('recent');
-  const { favorites } = useFavorites();
+  const { favorites, reload } = useFavorites();
+
+  useFocusEffect(useCallback(() => { reload(); }, []));
   const { fontSize } = useFontSize();
   const voice = useVoiceSearch();
   const insets = useSafeAreaInsets();

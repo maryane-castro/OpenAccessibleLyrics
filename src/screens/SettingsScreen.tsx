@@ -128,7 +128,17 @@ export function SettingsScreen({ navigation }: Props) {
                 +{saved.number}
               </Text>
             </View>
-            <Ionicons name="checkmark-circle" size={22} color="#22C55E" />
+            <Pressable
+              onPress={async () => {
+                await AsyncStorage.removeItem(STORAGE_KEY);
+                setSaved(null);
+              }}
+              hitSlop={12}
+              accessibilityLabel="Remover contato"
+              accessibilityRole="button"
+            >
+              <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
+            </Pressable>
           </View>
         ) : (
           <View style={styles.emptyCard}>

@@ -9,10 +9,13 @@ export type Favorite = { track: Track; savedAt: number };
 export function useFavorites(trackId?: number) {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
 
+  async function load() {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    setFavorites(raw ? JSON.parse(raw) : []);
+  }
+
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
-      if (raw) setFavorites(JSON.parse(raw));
-    });
+    load();
   }, []);
 
   const isFavorite = trackId !== undefined
@@ -28,5 +31,5 @@ export function useFavorites(trackId?: number) {
     setFavorites(next);
   }
 
-  return { favorites, isFavorite, toggle };
+  return { favorites, isFavorite, toggle, reload: load };
 }
